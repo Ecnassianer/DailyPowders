@@ -3,6 +3,7 @@ package com.dailypowders.ui
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.PlayArrow
@@ -92,6 +93,15 @@ fun DailyPowdersApp(
     val showBottomBar = currentRoute in bottomNavItems.map { it.route } || currentRoute == null
 
     Scaffold(
+        floatingActionButton = {
+            if (showBottomBar) {
+                FloatingActionButton(
+                    onClick = { navController.navigate("create_trigger") }
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Create trigger")
+                }
+            }
+        },
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar {
@@ -130,7 +140,6 @@ fun DailyPowdersApp(
             composable(Screen.ViewTriggers.route) {
                 ViewTriggersScreen(
                     viewModel = triggerViewModel,
-                    onCreateTrigger = { navController.navigate("create_trigger") },
                     onEditTrigger = { triggerId ->
                         navController.navigate("edit_trigger/$triggerId")
                     }

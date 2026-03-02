@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,68 +19,55 @@ import com.dailypowders.ui.viewmodel.TriggerViewModel
 @Composable
 fun ViewTriggersScreen(
     viewModel: TriggerViewModel,
-    onCreateTrigger: () -> Unit,
     onEditTrigger: (String) -> Unit
 ) {
     val triggers by viewModel.triggers.collectAsState()
     val data by viewModel.data.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            Text(
-                text = "View Triggers",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "View Triggers",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
 
-            if (triggers.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 64.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        "No triggers yet. Tap + to create one.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+        if (triggers.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 64.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "No triggers yet. Tap + to create one.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(bottom = 80.dp)
+            ) {
+                items(triggers, key = { it.id }) { trigger ->
+                    TriggerCard(
+                        trigger = trigger,
+                        isActivatedToday = trigger.id in data.dailyState.activatedTriggers,
+                        activationCount = data.dailyState.manualTriggerCounts[trigger.id],
+                        onEdit = { onEditTrigger(trigger.id) },
+                        onDelete = { viewModel.deleteTrigger(trigger.id) },
+                        onActivate = {
+                            if (trigger.happensEvery == HappensEvery.MANUALLY) {
+                                viewModel.activateManualTrigger(trigger.id)
+                            }
+                        }
                     )
                 }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(bottom = 80.dp)
-                ) {
-                    items(triggers, key = { it.id }) { trigger ->
-                        TriggerCard(
-                            trigger = trigger,
-                            isActivatedToday = trigger.id in data.dailyState.activatedTriggers,
-                            activationCount = data.dailyState.manualTriggerCounts[trigger.id],
-                            onEdit = { onEditTrigger(trigger.id) },
-                            onDelete = { viewModel.deleteTrigger(trigger.id) },
-                            onActivate = {
-                                if (trigger.happensEvery == HappensEvery.MANUALLY) {
-                                    viewModel.activateManualTrigger(trigger.id)
-                                }
-                            }
-                        )
-                    }
-                }
             }
-        }
-
-        // FAB menu
-        FloatingActionButton(
-            onClick = onCreateTrigger,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "Create trigger")
         }
     }
 }
