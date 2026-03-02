@@ -67,11 +67,11 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
                 val updated = repository.load()
                 updateState(updated)
 
-                // Layer 2: Cancel notification
-                notificationHelper.cancelTaskNotification(taskId)
+                // Layer 2: Cancel notification and summary if no tasks remain
+                val trigger = taskManager.findTriggerForTask(updated, taskId)
+                notificationHelper.cancelTaskNotification(taskId, trigger?.id)
 
                 // Layer 5: Cancel snooze alarm
-                val trigger = taskManager.findTriggerForTask(updated, taskId)
                 if (trigger != null) {
                     alarmScheduler.cancelSnooze(taskId, trigger.id)
                 }

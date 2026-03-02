@@ -38,7 +38,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
                         taskManager.completeTask(data, taskId)
                     }
                     // Layer 7: Only dismiss after successful save
-                    notificationHelper.cancelTaskNotification(taskId)
+                    notificationHelper.cancelTaskNotification(taskId, triggerId)
                 } catch (e: Exception) {
                     // Save failed - don't cancel notification so user can retry
                 }
@@ -47,7 +47,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 val minutes = intent.getIntExtra(EXTRA_SNOOZE_MINUTES, 30)
 
                 // Layer 7: Immediately dismiss
-                notificationHelper.cancelTaskNotification(taskId)
+                notificationHelper.cancelTaskNotification(taskId, triggerId)
 
                 // Schedule snooze alarm
                 alarmScheduler.scheduleSnooze(taskId, triggerId, minutes)

@@ -120,8 +120,22 @@ class NotificationHelper(private val context: Context) {
         postGroupSummary(trigger)
     }
 
-    fun cancelTaskNotification(taskId: String) {
+    fun cancelTaskNotification(taskId: String, triggerId: String? = null) {
         notificationManager.cancel(taskId.hashCode())
+        // If we know the trigger, check if the summary should be cancelled too
+        if (triggerId != null) {
+            cancelSummaryIfNoTaskNotifications(triggerId)
+        }
+    }
+
+    private fun cancelSummaryIfNoTaskNotifications(triggerId: String) {
+        val groupKey = "trigger_$triggerId"
+        val remaining = notificationManager.activeNotifications.count { notification ->
+            notification.id < SUMMARY_BASE_ID && notification.notification.group == groupKey
+        }
+        if (remaining == 0) {
+            cancelGroupSummary(triggerId)
+        }
     }
 
     fun cancelTriggerNotifications(trigger: Trigger) {
