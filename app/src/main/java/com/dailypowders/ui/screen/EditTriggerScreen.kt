@@ -243,12 +243,12 @@ fun EditTriggerScreen(
         val timePickerState = rememberTimePickerState(
             initialHour = hour,
             initialMinute = minute,
-            is24Hour = true
+            is24Hour = false
         )
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
             title = { Text("Select Time") },
-            text = { TimePicker(state = timePickerState) },
+            text = { TimeInput(state = timePickerState) },
             confirmButton = {
                 TextButton(onClick = {
                     hour = timePickerState.hour
