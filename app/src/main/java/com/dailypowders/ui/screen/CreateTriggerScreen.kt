@@ -257,7 +257,7 @@ private fun TaskEntryRow(
                 // Button to copy trigger title into task title
                 if (triggerTitle.isNotBlank()) {
                     TextButton(onClick = { onTitleChange(triggerTitle) }) {
-                        Text("=", style = MaterialTheme.typography.titleLarge)
+                        Text("Use title")
                     }
                 }
                 if (onDelete != null) {
