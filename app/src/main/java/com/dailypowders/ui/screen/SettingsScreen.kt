@@ -29,27 +29,25 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         Card(
             modifier = Modifier.fillMaxWidth()
         ) {
-            Row(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column {
-                    Text(
-                        text = "Day Reset Time",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        text = "When \"yesterday\" ends and tasks reset",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                TextButton(onClick = { showTimePicker = true }) {
-                    val displayHour = if (dayResetHour == 0) 12 else if (dayResetHour > 12) dayResetHour - 12 else dayResetHour
-                    val amPm = if (dayResetHour < 12) "AM" else "PM"
+                Text(
+                    text = "Day Reset Time",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = "When \"yesterday\" ends and tasks reset",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                val displayHour = if (dayResetHour == 0) 12 else if (dayResetHour > 12) dayResetHour - 12 else dayResetHour
+                val amPm = if (dayResetHour < 12) "AM" else "PM"
+                OutlinedButton(
+                    onClick = { showTimePicker = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Text(
                         text = "${displayHour.toString().padStart(2, '0')}:${dayResetMinute.toString().padStart(2, '0')} $amPm",
                         style = MaterialTheme.typography.titleMedium
