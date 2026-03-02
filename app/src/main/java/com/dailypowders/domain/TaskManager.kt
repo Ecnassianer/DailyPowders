@@ -28,8 +28,9 @@ class TaskManager {
     fun activateTrigger(data: TaskDataFile, triggerId: String, now: LocalDateTime): TaskDataFile {
         val trigger = data.triggers.find { it.id == triggerId } ?: return data
         val state = data.dailyState
+        val isReactivation = triggerId in state.activatedTriggers
 
-        val newActivated = if (triggerId in state.activatedTriggers) {
+        val newActivated = if (isReactivation) {
             state.activatedTriggers
         } else {
             state.activatedTriggers + triggerId
@@ -41,10 +42,23 @@ class TaskManager {
             state.manualTriggerCounts
         }
 
+        // For manual re-activation, clear completed/expired status so tasks become active again
+        val triggerTaskIds = trigger.tasks.map { it.id }.toSet()
+        val newCompleted = if (isReactivation && trigger.happensEvery == HappensEvery.MANUALLY) {
+            state.completedTaskIds.filter { it !in triggerTaskIds }
+        } else {
+            state.completedTaskIds
+        }
+        val baseExpired = if (isReactivation && trigger.happensEvery == HappensEvery.MANUALLY) {
+            state.expiredTaskIds.filter { it !in triggerTaskIds }
+        } else {
+            state.expiredTaskIds
+        }
+
         // Expire any tasks that are already past their expiration time
-        val newExpired = state.expiredTaskIds.toMutableList()
+        val newExpired = baseExpired.toMutableList()
         for (task in trigger.tasks) {
-            if (task.id !in state.completedTaskIds && task.id !in newExpired) {
+            if (task.id !in newCompleted && task.id !in newExpired) {
                 if (isTaskExpired(task, trigger, data, now)) {
                     newExpired.add(task.id)
                 }
@@ -54,6 +68,7 @@ class TaskManager {
         return data.copy(
             dailyState = state.copy(
                 activatedTriggers = newActivated,
+                completedTaskIds = newCompleted,
                 manualTriggerCounts = newManualCounts,
                 expiredTaskIds = newExpired
             )
