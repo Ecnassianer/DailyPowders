@@ -132,12 +132,15 @@ fun DailyPowdersApp(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.TaskView.route) {
+                LaunchedEffect(Unit) { taskViewModel.loadData() }
                 TaskViewScreen(viewModel = taskViewModel)
             }
             composable(Screen.ManualTriggers.route) {
+                LaunchedEffect(Unit) { triggerViewModel.loadData() }
                 ManualTriggersScreen(viewModel = triggerViewModel)
             }
             composable(Screen.ViewTriggers.route) {
+                LaunchedEffect(Unit) { triggerViewModel.loadData() }
                 ViewTriggersScreen(
                     viewModel = triggerViewModel,
                     onEditTrigger = { triggerId ->
@@ -146,6 +149,7 @@ fun DailyPowdersApp(
                 )
             }
             composable(Screen.Settings.route) {
+                LaunchedEffect(Unit) { settingsViewModel.loadData() }
                 SettingsScreen(viewModel = settingsViewModel)
             }
             composable("create_trigger") {
