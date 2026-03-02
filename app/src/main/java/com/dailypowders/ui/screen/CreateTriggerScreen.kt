@@ -1,5 +1,6 @@
 package com.dailypowders.ui.screen
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -228,6 +229,16 @@ fun CreateTriggerScreen(
     }
 }
 
+private val expiresOptions = listOf(
+    "" to "End of Day",
+    "1" to "1 hour",
+    "2" to "2 hours",
+    "4" to "4 hours",
+    "6" to "6 hours",
+    "8" to "8 hours",
+    "12" to "12 hours"
+)
+
 @Composable
 private fun TaskEntryRow(
     task: TaskEntry,
@@ -236,6 +247,8 @@ private fun TaskEntryRow(
     onExpiresChange: (String) -> Unit,
     onDelete: (() -> Unit)?
 ) {
+    var expiresExpanded by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -266,14 +279,38 @@ private fun TaskEntryRow(
                     }
                 }
             }
-            OutlinedTextField(
-                value = task.expiresHours,
-                onValueChange = onExpiresChange,
-                label = { Text("Expires after (hours, blank = End of Day)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
+            Box {
+                val selectedLabel = expiresOptions.find { it.first == task.expiresHours }?.second
+                    ?: if (task.expiresHours.isBlank()) "End of Day" else "${task.expiresHours} hours"
+                OutlinedTextField(
+                    value = selectedLabel,
+                    onValueChange = {},
+                    label = { Text("Expires after") },
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                // Invisible clickable overlay to open dropdown
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable { expiresExpanded = true }
+                )
+                DropdownMenu(
+                    expanded = expiresExpanded,
+                    onDismissRequest = { expiresExpanded = false }
+                ) {
+                    expiresOptions.forEach { (value, label) ->
+                        DropdownMenuItem(
+                            text = { Text(label) },
+                            onClick = {
+                                onExpiresChange(value)
+                                expiresExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
         }
     }
 }
