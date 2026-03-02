@@ -64,16 +64,25 @@ fun CreateTriggerScreen(
         // Happens Every
         item {
             Text("Happens Every", style = MaterialTheme.typography.bodyMedium)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                HappensEvery.entries.forEach { option ->
-                    FilterChip(
-                        selected = happensEvery == option,
-                        onClick = { happensEvery = option },
-                        label = { Text(option.name.lowercase().replaceFirstChar { it.uppercase() }) }
-                    )
+            Spacer(modifier = Modifier.height(4.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    HappensEvery.entries.take(2).forEach { option ->
+                        FilterChip(
+                            selected = happensEvery == option,
+                            onClick = { happensEvery = option },
+                            label = { Text(option.name.lowercase().replaceFirstChar { it.uppercase() }) }
+                        )
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    HappensEvery.entries.drop(2).forEach { option ->
+                        FilterChip(
+                            selected = happensEvery == option,
+                            onClick = { happensEvery = option },
+                            label = { Text(option.name.lowercase().replaceFirstChar { it.uppercase() }) }
+                        )
+                    }
                 }
             }
         }
