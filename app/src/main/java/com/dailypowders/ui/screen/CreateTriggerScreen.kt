@@ -97,7 +97,9 @@ fun CreateTriggerScreen(
                 ) {
                     Text("When:", style = MaterialTheme.typography.bodyMedium)
                     TextButton(onClick = { showTimePicker = true }) {
-                        Text("${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}")
+                        val displayHour = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
+                        val amPm = if (hour < 12) "AM" else "PM"
+                        Text("${displayHour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} $amPm")
                     }
                 }
             }

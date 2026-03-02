@@ -48,8 +48,10 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     )
                 }
                 TextButton(onClick = { showTimePicker = true }) {
+                    val displayHour = if (dayResetHour == 0) 12 else if (dayResetHour > 12) dayResetHour - 12 else dayResetHour
+                    val amPm = if (dayResetHour < 12) "AM" else "PM"
                     Text(
-                        text = "${dayResetHour.toString().padStart(2, '0')}:${dayResetMinute.toString().padStart(2, '0')}",
+                        text = "${displayHour.toString().padStart(2, '0')}:${dayResetMinute.toString().padStart(2, '0')} $amPm",
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
@@ -61,14 +63,14 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         val timePickerState = rememberTimePickerState(
             initialHour = dayResetHour,
             initialMinute = dayResetMinute,
-            is24Hour = true
+            is24Hour = false
         )
 
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
             title = { Text("Day Reset Time") },
             text = {
-                TimePicker(state = timePickerState)
+                TimeInput(state = timePickerState)
             },
             confirmButton = {
                 TextButton(onClick = {
