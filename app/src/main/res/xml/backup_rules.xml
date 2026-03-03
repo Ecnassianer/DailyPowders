@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android Auto Backup rules (API 23 - 31) -->
+<!-- Only backs up the main task data file. Excludes temp and backup files. -->
+<full-backup-content>
+    <include domain="file" path="tasks.json" />
+</full-backup-content>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android Data Extraction Rules (API 31+) -->
+<!-- Only backs up the main task data file. Excludes temp and backup files. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="file" path="tasks.json" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="file" path="tasks.json" />
+    </device-transfer>
+</data-extraction-rules>

@@ -26,7 +26,7 @@ class TaskRepository(private val context: Context) {
         encodeDefaults = true
     }
 
-    private val dataDir: File get() = context.noBackupFilesDir
+    private val dataDir: File get() = context.filesDir
 
     private val dataFile: File get() = File(dataDir, FILE_NAME)
     private val tmpFile: File get() = File(dataDir, "$FILE_NAME.tmp")
