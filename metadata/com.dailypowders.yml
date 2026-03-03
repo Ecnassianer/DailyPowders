@@ -1,0 +1,24 @@
+Categories:
+  - Health & Fitness
+License: GPL-3.0-only
+AuthorName: Ecnassianer
+SourceCode: https://github.com/Ecnassianer/DailyPowders
+IssueTracker: https://github.com/Ecnassianer/DailyPowders/issues
+
+AutoName: Daily Powders
+
+RepoType: git
+Repo: https://github.com/Ecnassianer/DailyPowders.git
+
+Builds:
+  - versionName: 1.0.0
+    versionCode: 1
+    commit: v1.0.0
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 1.0.0
+CurrentVersionCode: 1
