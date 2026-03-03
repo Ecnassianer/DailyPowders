@@ -1,6 +1,10 @@
 # Daily Powders
 
-A privacy-first Android app for managing daily tasks tied to scheduled or manual triggers. Get notified when it's time to act, check off tasks, and let the day reset automatically — no accounts, no internet, no tracking.
+When I started working out, my trainer recommended so many daily powders for me to take. Creatine, protein isolate, fiber, multi-vitamins, AGZ. And they all happen at different points in the day! It's a lot to keep track of, so I made the Daily Powders app to keep track of all the little daily tasks that need to get done. No guilt for yesterday, just a quick way to keep track of what's done today, and an automatic reset for tomorrow!
+
+Notifications happen at the right time for each task, and you can complete them right from the notification, no need to open the app.
+
+Daily Powders is a privacy-first Android app for managing daily tasks tied to scheduled or manual triggers. Get notified when it's time to act, check off tasks, and let the day reset automatically — no accounts, no internet, no tracking.
 
 ## Features
 
@@ -9,11 +13,7 @@ A privacy-first Android app for managing daily tasks tied to scheduled or manual
 - **Task expiration** — mark tasks with an expiration window; they auto-expire N hours after the trigger fires
 - **Manual triggers** — tap to activate any time, with a per-day count tracked
 - **Configurable day reset** — the "day" rolls over at a custom time (default 3:33 AM) rather than midnight
-- **No internet, no analytics, no cloud backup** — data lives only on your device
-
-## Privacy
-
-Data is stored in `noBackupFilesDir` and never synced to the cloud. The app declares `android:allowBackup="false"`. No network permissions are requested.
+- **No internet, no analytics, no cloud backup** — data lives only on your device and on google's app backup servers.
 
 ## Tech Stack
 
