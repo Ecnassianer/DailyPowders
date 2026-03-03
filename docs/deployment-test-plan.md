@@ -1,28 +1,26 @@
 # Daily Powders - Deployment Test Plan
 
-## Deployment: Shadow PC to Test Phone via ADB over Tailscale
+## Deployment: Dev PC to Test Phone via ADB over Tailscale
 
 ### Prerequisites
 
-- Shadow PC and test phone (Jelly Star) both connected to the same Tailscale network
+- Dev PC and test phone both connected to the same Tailscale network
 - USB Debugging enabled on the phone (Settings > Developer Options > USB Debugging)
 - Wireless Debugging enabled on the phone (Settings > Developer Options > Wireless Debugging)
-- ADB installed on Shadow PC (included with Android SDK at `C:/Users/Shadow/AppData/Local/Android/Sdk/platform-tools/`)
+- ADB installed on dev PC (included with Android SDK platform-tools)
 
 ### Network Info
 
 | Device | Tailscale IP |
 |--------|-------------|
-| Shadow PC | 100.88.128.73 |
-| Jelly Star | 100.73.229.94 |
+| Dev PC | `<DEV_PC_IP>` |
+| Test Phone | `<PHONE_IP>` |
 
 ### Step-by-Step Deployment
 
 #### 1. Build the APK
 
 ```bash
-export JAVA_HOME="C:/Program Files/Android/Android Studio/jbr"
-cd C:/Users/Shadow/Projects/DailyPowders
 ./gradlew assembleDebug
 ```
 
@@ -30,7 +28,7 @@ APK output: `app/build/outputs/apk/debug/app-debug.apk`
 
 #### 2. Enable ADB over TCP on the phone
 
-On the Jelly Star:
+On the test phone:
 1. Go to **Settings > Developer Options > Wireless Debugging** and toggle it ON
 2. Tap **Wireless Debugging** to open its settings
 3. Tap **Pair device with pairing code** - note the pairing code, IP, and port
@@ -39,7 +37,7 @@ On the Jelly Star:
 
 ```bash
 # Use the pairing port shown on the phone's Wireless Debugging screen
-adb pair 100.73.229.94:<pairing-port>
+adb pair <PHONE_IP>:<pairing-port>
 # Enter the pairing code when prompted
 ```
 
@@ -48,11 +46,11 @@ adb pair 100.73.229.94:<pairing-port>
 ```bash
 # Use the connection port shown on the Wireless Debugging main screen
 # (this is different from the pairing port)
-adb connect 100.73.229.94:<connect-port>
+adb connect <PHONE_IP>:<connect-port>
 
 # Verify connection
 adb devices
-# Should show: 100.73.229.94:<port>   device
+# Should show: <PHONE_IP>:<port>   device
 ```
 
 #### 5. Install the APK
@@ -91,8 +89,6 @@ adb shell am start -a android.settings.REQUEST_SCHEDULE_EXACT_ALARM -d "package:
 ### Quick Redeploy (after code changes)
 
 ```bash
-export JAVA_HOME="C:/Program Files/Android/Android Studio/jbr"
-cd C:/Users/Shadow/Projects/DailyPowders
 ./gradlew assembleDebug && adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
@@ -104,8 +100,8 @@ cd C:/Users/Shadow/Projects/DailyPowders
 | Connection refused | Check Tailscale is connected on both devices (`tailscale status`) |
 | `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | Uninstall old version first: `adb uninstall com.dailypowders` |
 | `INSTALL_FAILED_USER_RESTRICTED` | Enable "Install via USB" in Developer Options |
-| Phone disconnects after sleep | Re-run `adb connect 100.73.229.94:<port>` |
-| Slow transfer | Tailscale uses relay if no direct connection; check `tailscale ping jelly-star` |
+| Phone disconnects after sleep | Re-run `adb connect <PHONE_IP>:<port>` |
+| Slow transfer | Tailscale uses relay if no direct connection; check `tailscale ping <phone-hostname>` |
 
 ### Viewing Logs
 
@@ -141,7 +137,7 @@ adb logcat -c && adb logcat --pid=$(adb shell pidof com.dailypowders)
 | FL-1 | Fresh install | Install APK on clean device | App opens to Tasks tab, empty state | |
 | FL-2 | Notification permission | Launch app on API 33+ | Permission dialog appears | |
 | FL-3 | Exact alarm permission | Launch app on API 31+ | Redirected to exact alarm settings | |
-| FL-4 | Data file created | Create a trigger then check `noBackupFilesDir` | tasks.json exists | |
+| FL-4 | Data file created | Create a trigger then check `filesDir` | tasks.json exists | |
 
 ## 2. Trigger Creation
 
@@ -234,9 +230,9 @@ adb logcat -c && adb logcat --pid=$(adb shell pidof com.dailypowders)
 | ID | Test | Steps | Expected | Pass |
 |----|------|-------|----------|------|
 | DI-1 | Atomic write | Create/complete tasks rapidly | No data corruption in tasks.json | |
-| DI-2 | Backup file | Check noBackupFilesDir after several saves | tasks.json.bak exists as backup | |
+| DI-2 | Backup file | Check filesDir after several saves | tasks.json.bak exists as backup | |
 | DI-3 | Corrupt recovery | Manually corrupt tasks.json | App falls back to .bak file | |
-| DI-4 | No cloud backup | Check device backup settings | App data not included in cloud backup | |
+| DI-4 | Scoped cloud backup | Check device backup settings | Only tasks.json included in cloud backup | |
 | DI-5 | Concurrent access | Tap Done on notification while using app | Both actions apply correctly | |
 
 ## 11. Edge Cases

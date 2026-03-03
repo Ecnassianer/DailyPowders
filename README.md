@@ -13,7 +13,11 @@ Daily Powders is a privacy-first Android app for managing daily tasks tied to sc
 - **Task expiration** — mark tasks with an expiration window; they auto-expire N hours after the trigger fires
 - **Manual triggers** — tap to activate any time, with a per-day count tracked
 - **Configurable day reset** — the "day" rolls over at a custom time (default 3:33 AM) rather than midnight
-- **No internet, no analytics, no cloud backup** — data lives only on your device and on google's app backup servers.
+- **No internet, no analytics** — data lives on your device (backed up via Android Auto Backup if enabled)
+
+## Privacy
+
+Data is stored locally on-device. The app allows Android Auto Backup of task data only (`tasks.json`). No network permissions are requested.
 
 ## Tech Stack
 
@@ -37,12 +41,11 @@ ui/viewmodel/   TaskViewModel, TriggerViewModel, SettingsViewModel
 ## Building
 
 ```bash
-export JAVA_HOME="C:/Program Files/Android/Android Studio/jbr"
-export ANDROID_HOME="$HOME/AppData/Local/Android/Sdk"
-
 ./gradlew assembleDebug   # build APK
 ./gradlew test            # run unit tests
 ```
+
+Requires `JAVA_HOME` and `ANDROID_HOME` to be set.
 
 ## Permissions
 

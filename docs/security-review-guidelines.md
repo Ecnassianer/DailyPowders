@@ -22,23 +22,26 @@ Daily Powders is an **offline-only** Android app with no network access, no anal
 ### 2.1 Data Storage and Privacy
 
 **What to check:**
-- [ ] Data stored in `noBackupFilesDir` (not `filesDir` or `externalFilesDir`)
-- [ ] `android:allowBackup="false"` in manifest
-- [ ] `android:fullBackupContent="false"` in manifest
+- [ ] Data stored in `filesDir` (not `externalFilesDir`)
+- [ ] `android:allowBackup="true"` in manifest with explicit backup rules
+- [ ] `android:fullBackupContent` points to backup rules XML (API 23-31)
+- [ ] `android:dataExtractionRules` points to extraction rules XML (API 31+)
+- [ ] Backup rules only include `tasks.json` (no temp/backup files)
 - [ ] No sensitive data in SharedPreferences
 - [ ] No sensitive data written to logs (`Log.d`, `Log.e`)
 - [ ] No sensitive data in intent extras visible to other apps
 - [ ] File permissions are default (app-private)
 
 **What good looks like:**
-- All user data in `context.noBackupFilesDir` which is:
+- All user data in `context.filesDir` which is:
   - App-private (only accessible by our app or root)
-  - Excluded from cloud backup
   - Encrypted at rest by Android's file-based encryption
+  - Backed up via Android Auto Backup (scoped to `tasks.json` only)
+- Backup is allowed because task data is non-sensitive (task titles and schedules) and users benefit from data surviving device changes
 
 **Common mistakes:**
-- Using `filesDir` (included in cloud backup by default)
 - Using `externalFilesDir` (readable by other apps on older Android versions)
+- Allowing backup without explicit rules (backs up everything by default)
 - Logging user data for debugging and forgetting to remove it
 
 ### 2.2 Intent and PendingIntent Security
@@ -125,8 +128,8 @@ Daily Powders is an **offline-only** Android app with no network access, no anal
 ### 2.7 Manifest Configuration
 
 **What to check:**
-- [ ] `android:allowBackup="false"`
-- [ ] `android:fullBackupContent="false"`
+- [ ] `android:allowBackup="true"` with scoped backup rules
+- [ ] `android:fullBackupContent` and `android:dataExtractionRules` configured
 - [ ] No unnecessary `exported="true"` components
 - [ ] `launchMode="singleTop"` on main activity (prevents task stack exploits)
 - [ ] No `android:debuggable="true"` in release builds
@@ -147,8 +150,8 @@ Daily Powders is an **offline-only** Android app with no network access, no anal
 ## 3. Current Security Posture
 
 ### Done Well
-- Data stored in `noBackupFilesDir` (no cloud backup)
-- `allowBackup=false` and `fullBackupContent=false`
+- Data stored in `filesDir` with scoped Auto Backup (only `tasks.json`)
+- `allowBackup=true` with explicit `fullBackupContent` and `dataExtractionRules`
 - No internet permission (zero network attack surface)
 - All PendingIntents use `FLAG_IMMUTABLE`
 - All BroadcastReceivers are non-exported
@@ -175,13 +178,13 @@ Daily Powders is an **offline-only** Android app with no network access, no anal
 ### Dynamic Testing
 - **ADB**: `adb shell am broadcast` to test receiver behavior with crafted intents
 - **File inspection**: `adb shell run-as com.dailypowders ls /data/data/com.dailypowders/no_backup/`
-- **Backup test**: `adb backup com.dailypowders` should produce empty/minimal backup
+- **Backup test**: `adb backup com.dailypowders` should include only `tasks.json`
 - **Intent testing**: Verify non-exported receivers reject external broadcasts
 
 ### Code Review Focus
 - Search for `Log.` calls that might leak user data
 - Search for `exported="true"` in manifest
-- Verify all file paths use `noBackupFilesDir`
+- Verify all file paths use `filesDir`
 - Check PendingIntent flags (`FLAG_IMMUTABLE` everywhere)
 - Verify `synchronized` on all repository access paths
 

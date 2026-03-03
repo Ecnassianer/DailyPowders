@@ -2,8 +2,6 @@
 
 ## Project Info
 - **Repo:** https://github.com/Ecnassianer/DailyPowders
-- **GitHub account for Claude:** AgenticAI3909404902
-- **Local path:** C:/Users/Shadow/Projects/DailyPowders
 
 ## Stack
 - Kotlin, Jetpack Compose, MVVM
@@ -11,13 +9,9 @@
 - kotlinx.serialization for JSON data
 - AlarmManager for exact notification scheduling
 - Gradle with Kotlin DSL
-- Git via SSH (key at C:/Users/Shadow/.ssh/id_ed25519_github)
 
 ## Build
 ```bash
-export JAVA_HOME="C:/Program Files/Android/Android Studio/jbr"
-export ANDROID_HOME="C:/Users/Shadow/AppData/Local/Android/Sdk"
-cd C:/Users/Shadow/Projects/DailyPowders
 ./gradlew assembleDebug   # Build APK
 ./gradlew test            # Run unit tests
 ```
@@ -32,8 +26,8 @@ cd C:/Users/Shadow/Projects/DailyPowders
 - `ui/screen/` — Compose screens (TaskView, ManualTriggers, ViewTriggers, Settings, CreateTrigger, EditTrigger)
 
 ## Key Design Decisions
-- Data stored at `noBackupFilesDir/tasks.json` (never backed up to cloud)
-- `android:allowBackup="false"` in manifest
+- Data stored at `filesDir/tasks.json`, backed up via Android Auto Backup
+- `android:allowBackup="true"` with backup rules scoped to `tasks.json` only
 - No internet, no analytics, no telemetry
 - Permissions: POST_NOTIFICATIONS, SCHEDULE_EXACT_ALARM, RECEIVE_BOOT_COMPLETED
 - Notification groups: one group per trigger (Gmail-style expand/collapse)
