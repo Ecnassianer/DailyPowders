@@ -23,6 +23,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _dayResetMinute = MutableStateFlow(33)
     val dayResetMinute: StateFlow<Int> = _dayResetMinute
 
+    private val _debugFeaturesEnabled = MutableStateFlow(false)
+    val debugFeaturesEnabled: StateFlow<Boolean> = _debugFeaturesEnabled
+
     fun loadData() {
         viewModelScope.launch(Dispatchers.IO) {
             val data = try { repository.load() } catch (e: Exception) {
@@ -30,6 +33,17 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             }
             _dayResetHour.value = data.dayResetHour
             _dayResetMinute.value = data.dayResetMinute
+            _debugFeaturesEnabled.value = data.debugFeaturesEnabled
+        }
+    }
+
+    fun toggleDebugFeatures() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val newValue = !_debugFeaturesEnabled.value
+            _debugFeaturesEnabled.value = newValue
+            repository.update { data ->
+                data.copy(debugFeaturesEnabled = newValue)
+            }
         }
     }
 

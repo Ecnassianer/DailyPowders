@@ -1,6 +1,8 @@
 package com.dailypowders.ui.screen
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,6 +15,7 @@ import com.dailypowders.ui.viewmodel.SettingsViewModel
 fun SettingsScreen(viewModel: SettingsViewModel) {
     val dayResetHour by viewModel.dayResetHour.collectAsState()
     val dayResetMinute by viewModel.dayResetMinute.collectAsState()
+    val debugEnabled by viewModel.debugFeaturesEnabled.collectAsState()
     var showTimePicker by remember { mutableStateOf(false) }
 
     Column(
@@ -54,6 +57,15 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     )
                 }
             }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedButton(
+            onClick = { viewModel.toggleDebugFeatures() },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(if (debugEnabled) "Disable Debug Features" else "Enable Debug Features")
         }
     }
 

@@ -4,9 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.dailypowders.alarm.AlarmScheduler
-import com.dailypowders.data.model.Task
-import com.dailypowders.data.model.TaskDataFile
-import com.dailypowders.data.model.Trigger
+import com.dailypowders.data.model.*
 import com.dailypowders.data.repository.TaskRepository
 import com.dailypowders.domain.TaskManager
 import com.dailypowders.notification.NotificationHelper
@@ -103,6 +101,34 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearHighlight() {
         _highlightTaskId.value = null
+    }
+
+    fun fireTestNotification() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val now = LocalDateTime.now()
+            val taskId = java.util.UUID.randomUUID().toString().take(8)
+            val triggerId = "debug_trigger"
+            val task = Task(id = taskId, title = "Interact With Debug Notification")
+            val trigger = Trigger(
+                id = triggerId,
+                title = "Debug",
+                happensEvery = HappensEvery.MANUALLY,
+                tasks = listOf(task)
+            )
+
+            // Persist the debug trigger and activate it so Done/Snooze actions work
+            repository.update { data ->
+                // Remove old debug trigger if exists, add fresh one
+                val filtered = data.copy(
+                    triggers = data.triggers.filter { it.id != triggerId } + trigger
+                )
+                taskManager.activateTrigger(filtered, triggerId, now)
+            }
+            val updated = repository.load()
+            updateState(updated)
+
+            notificationHelper.postTaskNotification(task, trigger, null, now)
+        }
     }
 
     private fun updateState(data: TaskDataFile) {

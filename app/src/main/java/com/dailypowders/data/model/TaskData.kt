@@ -8,6 +8,7 @@ data class TaskDataFile(
     val schemaVersion: Int = 1,
     val dayResetHour: Int = 3,
     val dayResetMinute: Int = 33,
+    val debugFeaturesEnabled: Boolean = false,
     val triggers: List<Trigger> = emptyList(),
     val dailyState: DailyState = DailyState()
 )
