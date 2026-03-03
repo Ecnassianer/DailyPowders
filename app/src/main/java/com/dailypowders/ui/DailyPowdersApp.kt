@@ -103,6 +103,16 @@ fun DailyPowdersApp(
     val currentRoute = navBackStackEntry?.destination?.route
     val showBottomBar = currentRoute in bottomNavItems.map { it.route } || currentRoute == null
 
+    // Reload data when switching tabs so cross-viewmodel changes are picked up
+    LaunchedEffect(currentRoute) {
+        when (currentRoute) {
+            Screen.TaskView.route -> taskViewModel.loadData()
+            Screen.ManualTriggers.route -> triggerViewModel.loadData()
+            Screen.ViewTriggers.route -> triggerViewModel.loadData()
+            Screen.Settings.route -> settingsViewModel.loadData()
+        }
+    }
+
     // FAB menu state
     var showFabMenu by remember { mutableStateOf(false) }
     // Trigger selection dialog state
@@ -173,15 +183,12 @@ fun DailyPowdersApp(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.TaskView.route) {
-                LaunchedEffect(Unit) { taskViewModel.loadData() }
                 TaskViewScreen(viewModel = taskViewModel)
             }
             composable(Screen.ManualTriggers.route) {
-                LaunchedEffect(Unit) { triggerViewModel.loadData() }
                 ManualTriggersScreen(viewModel = triggerViewModel)
             }
             composable(Screen.ViewTriggers.route) {
-                LaunchedEffect(Unit) { triggerViewModel.loadData() }
                 ViewTriggersScreen(
                     viewModel = triggerViewModel,
                     onEditTrigger = { triggerId ->
@@ -190,7 +197,6 @@ fun DailyPowdersApp(
                 )
             }
             composable(Screen.Settings.route) {
-                LaunchedEffect(Unit) { settingsViewModel.loadData() }
                 SettingsScreen(viewModel = settingsViewModel)
             }
             composable(Screen.Debug.route) {

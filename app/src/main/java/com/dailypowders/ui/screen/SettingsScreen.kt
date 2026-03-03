@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.dailypowders.BuildConfig
 import com.dailypowders.ui.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,13 +60,15 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        if (BuildConfig.DEBUG) {
+            Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedButton(
-            onClick = { viewModel.toggleDebugFeatures() },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(if (debugEnabled) "Disable Debug Features" else "Enable Debug Features")
+            OutlinedButton(
+                onClick = { viewModel.toggleDebugFeatures() },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(if (debugEnabled) "Disable Debug Features" else "Enable Debug Features")
+            }
         }
     }
 

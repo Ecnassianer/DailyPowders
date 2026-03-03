@@ -1,0 +1,7 @@
+Initial release of Daily Powders.
+
+- Create triggers with scheduled or manual activation
+- Smart notifications with Done and Snooze actions
+- Task auto-expiration
+- Customizable day reset time
+- Google Auto Backup support

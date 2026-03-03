@@ -1,0 +1,12 @@
+Daily Powders helps you stay on top of your daily vitamins, supplements, and routines with a smart notification system that reminds you at just the right time.
+
+Features:
+
+- Trigger-based task system: Group related tasks under triggers that fire on a schedule (daily, weekly, monthly) or manually
+- Smart notifications: Each task gets its own notification with Done and Snooze buttons — mark tasks complete right from the notification shade
+- Manual triggers: Tap to activate tasks for routines that happen on demand, like taking vitamins with a meal
+- Auto-expiration: Tasks can automatically expire after a set number of hours so stale reminders don't pile up
+- Customizable day reset: Set when your "day" starts — perfect for night owls or shift workers
+- No tracking, no ads, no accounts: Your data stays on your device. No analytics, no telemetry, no network requests whatsoever
+
+Daily Powders is free and open-source software (GPL-3.0). View the source code and contribute at: https://github.com/Ecnassianer/DailyPowders
