@@ -12,6 +12,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.dailypowders.data.model.*
@@ -57,228 +59,244 @@ fun EditTriggerScreen(
         })
     }
     var showTimePicker by remember { mutableStateOf(false) }
+    var focusNewTaskIndex by remember { mutableIntStateOf(-1) }
 
-    LazyColumn(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(16.dp)
     ) {
-        item {
-            Text(
-                text = "Edit Trigger",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-        }
-
-        item {
-            OutlinedTextField(
-                value = triggerTitle,
-                onValueChange = { triggerTitle = it },
-                label = { Text("Trigger Title (optional)") },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-        item {
-            Text("Happens Every", style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(4.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    HappensEvery.entries.take(2).forEach { option ->
-                        FilterChip(
-                            selected = happensEvery == option,
-                            onClick = { happensEvery = option },
-                            label = { Text(option.name.lowercase().replaceFirstChar { it.uppercase() }) }
-                        )
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    HappensEvery.entries.drop(2).forEach { option ->
-                        FilterChip(
-                            selected = happensEvery == option,
-                            onClick = { happensEvery = option },
-                            label = { Text(option.name.lowercase().replaceFirstChar { it.uppercase() }) }
-                        )
-                    }
-                }
-            }
-        }
-
-        if (happensEvery != HappensEvery.MANUALLY) {
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             item {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text("When:", style = MaterialTheme.typography.bodyMedium)
-                    TextButton(onClick = { showTimePicker = true }) {
-                        val displayHour = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
-                        val amPm = if (hour < 12) "AM" else "PM"
-                        Text("${displayHour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} $amPm")
-                    }
-                }
+                Text(
+                    text = "Edit Trigger",
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
             }
 
-            if (happensEvery == HappensEvery.WEEKLY) {
-                item {
-                    Text("Day of Week", style = MaterialTheme.typography.bodyMedium)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        val days = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-                        days.forEachIndexed { index, day ->
+            item {
+                OutlinedTextField(
+                    value = triggerTitle,
+                    onValueChange = { triggerTitle = it },
+                    label = { Text("Trigger Title (optional)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            item {
+                Text("Happens Every", style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(4.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        HappensEvery.entries.take(2).forEach { option ->
                             FilterChip(
-                                selected = weekDay == index + 1,
-                                onClick = { weekDay = index + 1 },
-                                label = { Text(day) }
+                                selected = happensEvery == option,
+                                onClick = { happensEvery = option },
+                                label = { Text(option.name.lowercase().replaceFirstChar { it.uppercase() }) }
+                            )
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        HappensEvery.entries.drop(2).forEach { option ->
+                            FilterChip(
+                                selected = happensEvery == option,
+                                onClick = { happensEvery = option },
+                                label = { Text(option.name.lowercase().replaceFirstChar { it.uppercase() }) }
                             )
                         }
                     }
                 }
             }
 
-            if (happensEvery == HappensEvery.MONTHLY) {
+            if (happensEvery != HappensEvery.MANUALLY) {
                 item {
-                    OutlinedTextField(
-                        value = monthDay.toString(),
-                        onValueChange = {
-                            val day = it.toIntOrNull()
-                            if (day != null && day in 1..31) monthDay = day
-                        },
-                        label = { Text("Day of Month (1-31)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.width(200.dp)
-                    )
-                }
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Tasks", style = MaterialTheme.typography.titleMedium)
-        }
-
-        itemsIndexed(tasks) { index, task ->
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        OutlinedTextField(
-                            value = task.title,
-                            onValueChange = { newTitle ->
-                                tasks = tasks.toMutableList().apply {
-                                    set(index, task.copy(title = newTitle))
-                                }
-                            },
-                            label = { Text("Task Title") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                        if (tasks.size > 1) {
-                            IconButton(onClick = {
-                                tasks = tasks.toMutableList().apply { removeAt(index) }
-                            }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Remove task")
-                            }
+                        Text("When:", style = MaterialTheme.typography.bodyMedium)
+                        TextButton(onClick = { showTimePicker = true }) {
+                            val displayHour = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
+                            val amPm = if (hour < 12) "AM" else "PM"
+                            Text("${displayHour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} $amPm")
                         }
                     }
-                    var expiresExpanded by remember { mutableStateOf(false) }
-                    Box {
-                        val expiresOptions = listOf(
-                            "" to "End of Day",
-                            "1" to "1 hour",
-                            "2" to "2 hours",
-                            "4" to "4 hours",
-                            "6" to "6 hours",
-                            "8" to "8 hours",
-                            "12" to "12 hours"
-                        )
-                        val selectedLabel = expiresOptions.find { it.first == task.expiresHours }?.second
-                            ?: if (task.expiresHours.isBlank()) "End of Day" else "${task.expiresHours} hours"
-                        OutlinedTextField(
-                            value = selectedLabel,
-                            onValueChange = {},
-                            label = { Text("Expires after") },
-                            readOnly = true,
+                }
+
+                if (happensEvery == HappensEvery.WEEKLY) {
+                    item {
+                        Text("Day of Week", style = MaterialTheme.typography.bodyMedium)
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
-                        Box(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .clickable { expiresExpanded = true }
-                        )
-                        DropdownMenu(
-                            expanded = expiresExpanded,
-                            onDismissRequest = { expiresExpanded = false }
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            expiresOptions.forEach { (value, label) ->
-                                DropdownMenuItem(
-                                    text = { Text(label) },
-                                    onClick = {
-                                        tasks = tasks.toMutableList().apply {
-                                            set(index, task.copy(expiresHours = value))
-                                        }
-                                        expiresExpanded = false
-                                    }
+                            val days = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+                            days.forEachIndexed { index, day ->
+                                FilterChip(
+                                    selected = weekDay == index + 1,
+                                    onClick = { weekDay = index + 1 },
+                                    label = { Text(day) }
                                 )
                             }
                         }
                     }
                 }
+
+                if (happensEvery == HappensEvery.MONTHLY) {
+                    item {
+                        OutlinedTextField(
+                            value = monthDay.toString(),
+                            onValueChange = {
+                                val day = it.toIntOrNull()
+                                if (day != null && day in 1..31) monthDay = day
+                            },
+                            label = { Text("Day of Month (1-31)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.width(200.dp)
+                        )
+                    }
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Tasks", style = MaterialTheme.typography.titleMedium)
+            }
+
+            itemsIndexed(tasks) { index, task ->
+                val focusRequester = remember { FocusRequester() }
+                var expiresExpanded by remember { mutableStateOf(false) }
+
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedTextField(
+                                value = task.title,
+                                onValueChange = { newTitle ->
+                                    tasks = tasks.toMutableList().apply {
+                                        set(index, task.copy(title = newTitle))
+                                    }
+                                },
+                                label = { Text("Task Title") },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .focusRequester(focusRequester),
+                                singleLine = true
+                            )
+                            if (tasks.size > 1) {
+                                IconButton(onClick = {
+                                    tasks = tasks.toMutableList().apply { removeAt(index) }
+                                }) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Remove task")
+                                }
+                            }
+                        }
+                        Box {
+                            val expiresOptions = listOf(
+                                "" to "End of Day",
+                                "1" to "1 hour",
+                                "2" to "2 hours",
+                                "4" to "4 hours",
+                                "6" to "6 hours",
+                                "8" to "8 hours",
+                                "12" to "12 hours"
+                            )
+                            val selectedLabel = expiresOptions.find { it.first == task.expiresHours }?.second
+                                ?: if (task.expiresHours.isBlank()) "End of Day" else "${task.expiresHours} hours"
+                            OutlinedTextField(
+                                value = selectedLabel,
+                                onValueChange = {},
+                                label = { Text("Expires after") },
+                                readOnly = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .clickable { expiresExpanded = true }
+                            )
+                            DropdownMenu(
+                                expanded = expiresExpanded,
+                                onDismissRequest = { expiresExpanded = false }
+                            ) {
+                                expiresOptions.forEach { (value, label) ->
+                                    DropdownMenuItem(
+                                        text = { Text(label) },
+                                        onClick = {
+                                            tasks = tasks.toMutableList().apply {
+                                                set(index, task.copy(expiresHours = value))
+                                            }
+                                            expiresExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                LaunchedEffect(focusNewTaskIndex) {
+                    if (index == focusNewTaskIndex) {
+                        focusRequester.requestFocus()
+                        focusNewTaskIndex = -1
+                    }
+                }
+            }
+
+            item {
+                TextButton(onClick = {
+                    tasks = tasks + TaskEntryWithId(originalId = null, title = "", expiresHours = "")
+                    focusNewTaskIndex = tasks.size // index of the newly added task
+                }) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Add Task")
+                }
             }
         }
 
-        item {
-            TextButton(onClick = {
-                tasks = tasks + TaskEntryWithId(originalId = null, title = "", expiresHours = "")
-            }) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Add Task")
-            }
-        }
+        // Save button - always visible outside the scroll
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(
+            onClick = {
+                val taskList = tasks.mapNotNull { entry ->
+                    if (entry.title.isBlank()) return@mapNotNull null
+                    val taskId = entry.originalId ?: viewModel.generateId()
+                    Task(
+                        id = taskId,
+                        title = entry.title,
+                        expiresHours = entry.expiresHours.toIntOrNull()
+                    )
+                }
 
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = {
-                    val taskList = tasks.mapNotNull { entry ->
-                        if (entry.title.isBlank()) return@mapNotNull null
-                        val taskId = entry.originalId ?: viewModel.generateId()
-                        Task(
-                            id = taskId,
-                            title = entry.title,
-                            expiresHours = entry.expiresHours.toIntOrNull()
-                        )
-                    }
-
-                    if (taskList.isNotEmpty()) {
-                        val updatedTrigger = Trigger(
-                            id = triggerId,
-                            title = triggerTitle,
-                            happensEvery = happensEvery,
-                            when_ = if (happensEvery != HappensEvery.MANUALLY) TimeOfDay(hour, minute) else null,
-                            weekDay = if (happensEvery == HappensEvery.WEEKLY) weekDay else null,
-                            monthDay = if (happensEvery == HappensEvery.MONTHLY) monthDay else null,
-                            tasks = taskList
-                        )
-                        viewModel.updateTrigger(updatedTrigger)
-                        onDone()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Save Changes")
-            }
+                if (taskList.isNotEmpty()) {
+                    val updatedTrigger = Trigger(
+                        id = triggerId,
+                        title = triggerTitle,
+                        happensEvery = happensEvery,
+                        when_ = if (happensEvery != HappensEvery.MANUALLY) TimeOfDay(hour, minute) else null,
+                        weekDay = if (happensEvery == HappensEvery.WEEKLY) weekDay else null,
+                        monthDay = if (happensEvery == HappensEvery.MONTHLY) monthDay else null,
+                        tasks = taskList
+                    )
+                    viewModel.updateTrigger(updatedTrigger)
+                    onDone()
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Save Changes")
         }
     }
 
