@@ -10,6 +10,7 @@ import com.dailypowders.MainActivity
 import com.dailypowders.R
 import com.dailypowders.data.model.Task
 import com.dailypowders.data.model.Trigger
+import android.app.Notification
 import java.time.Duration
 import java.time.LocalDateTime
 
@@ -95,8 +96,8 @@ class NotificationHelper(private val context: Context) {
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(task.title)
-            .setContentText(triggerDisplayName(trigger))
+            .setContentTitle(triggerDisplayName(trigger))
+            .setContentText(task.title)
             .setContentIntent(tapPending)
             .setAutoCancel(false)
             .setGroup(groupKey)
@@ -131,7 +132,8 @@ class NotificationHelper(private val context: Context) {
     private fun cancelSummaryIfNoTaskNotifications(triggerId: String) {
         val groupKey = "trigger_$triggerId"
         val remaining = notificationManager.activeNotifications.count { notification ->
-            notification.id < SUMMARY_BASE_ID && notification.notification.group == groupKey
+            notification.notification.group == groupKey &&
+                (notification.notification.flags and Notification.FLAG_GROUP_SUMMARY) == 0
         }
         if (remaining == 0) {
             cancelGroupSummary(triggerId)
@@ -161,11 +163,8 @@ class NotificationHelper(private val context: Context) {
         for (notification in activeNotifications) {
             val id = notification.id
 
-            // Check summary notifications
-            if (id >= SUMMARY_BASE_ID) {
-                // This is a summary - check if its trigger is still active
-                // We can't easily reverse-map the summary ID to a trigger ID,
-                // so summaries are cleaned up separately below
+            // Skip summary notifications
+            if ((notification.notification.flags and Notification.FLAG_GROUP_SUMMARY) != 0) {
                 continue
             }
 
