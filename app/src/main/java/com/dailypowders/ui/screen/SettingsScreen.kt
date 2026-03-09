@@ -70,6 +70,15 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 Text(if (debugEnabled) "Disable Debug Features" else "Enable Debug Features")
             }
         }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Text(
+            text = "v${BuildConfig.VERSION_NAME}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
     }
 
     if (showTimePicker) {
