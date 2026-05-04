@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dailypowders.data.model.Task
 import com.dailypowders.data.model.Trigger
@@ -112,9 +113,12 @@ private fun SectionHeader(title: String) {
 private fun TriggerGroupHeader(title: String) {
     Text(
         text = title,
-        style = MaterialTheme.typography.labelSmall,
+        style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 2.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(horizontal = 12.dp, vertical = 4.dp)
     )
 }
 
@@ -191,21 +195,26 @@ private fun TaskRow(
             .fillMaxWidth()
             .background(backgroundColor, shape = MaterialTheme.shapes.small)
             .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 11.dp),
+            .padding(horizontal = 12.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Checkbox(
-            checked = isCompleted,
-            onCheckedChange = { onClick() },
-            colors = CheckboxDefaults.colors(
-                checkedColor = CompletedGreen,
-                uncheckedColor = if (isExpired) ExpiredGray else MaterialTheme.colorScheme.onSurface
+        // Disable the 40dp min interactive target so checkbox + row collapse
+        // to the visual checkbox size; the whole row is the click target anyway.
+        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+            Checkbox(
+                checked = isCompleted,
+                onCheckedChange = { onClick() },
+                modifier = Modifier.size(20.dp),
+                colors = CheckboxDefaults.colors(
+                    checkedColor = CompletedGreen,
+                    uncheckedColor = if (isExpired) ExpiredGray else MaterialTheme.colorScheme.onSurface
+                )
             )
-        )
-        Spacer(modifier = Modifier.width(8.dp))
+        }
+        Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = task.title,
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodyMedium,
             color = textColor
         )
     }
