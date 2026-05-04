@@ -113,7 +113,8 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
                 id = triggerId,
                 title = "Debug",
                 happensEvery = HappensEvery.MANUALLY,
-                tasks = listOf(task)
+                tasks = listOf(task),
+                soundEnabled = true
             )
 
             // Persist the debug trigger and activate it so Done/Snooze actions work

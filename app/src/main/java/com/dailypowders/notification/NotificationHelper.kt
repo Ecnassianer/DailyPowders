@@ -94,6 +94,11 @@ class NotificationHelper(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        // Make alert ownership explicit:
+        //   sound on  -> only the child plays sound; summary is silent
+        //   sound off -> nothing plays sound
+        // Without this, the summary post that follows can swallow the child's
+        // alert on some Android skins.
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(triggerDisplayName(trigger))
@@ -101,6 +106,7 @@ class NotificationHelper(private val context: Context) {
             .setContentIntent(tapPending)
             .setAutoCancel(false)
             .setGroup(groupKey)
+            .setGroupAlertBehavior(groupAlertBehaviorFor(trigger))
             .addAction(0, "Done!", donePending)
             .addAction(0, "Snooze 30", snooze30Pending)
             .addAction(0, "Snooze 60", snooze60Pending)
@@ -121,6 +127,10 @@ class NotificationHelper(private val context: Context) {
         // Post/update summary notification for the group
         postGroupSummary(trigger)
     }
+
+    private fun groupAlertBehaviorFor(trigger: Trigger): Int =
+        if (trigger.soundEnabled) NotificationCompat.GROUP_ALERT_CHILDREN
+        else NotificationCompat.GROUP_ALERT_SUMMARY
 
     fun cancelTaskNotification(taskId: String, triggerId: String? = null) {
         notificationManager.cancel(taskId.hashCode())
@@ -209,6 +219,8 @@ class NotificationHelper(private val context: Context) {
             .setGroupSummary(true)
             .setAutoCancel(false)
             .setContentIntent(tapPending)
+            .setGroupAlertBehavior(groupAlertBehaviorFor(trigger))
+            .setSilent(!trigger.soundEnabled)
             .build()
 
         notificationManager.notify(summaryId, summary)
