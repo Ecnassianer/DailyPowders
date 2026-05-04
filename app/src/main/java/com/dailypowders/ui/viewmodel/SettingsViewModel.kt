@@ -1,11 +1,13 @@
 package com.dailypowders.ui.viewmodel
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.dailypowders.alarm.AlarmScheduler
 import com.dailypowders.data.model.TaskDataFile
 import com.dailypowders.data.repository.TaskRepository
+import com.dailypowders.notification.NotificationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,6 +18,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     private val repository = TaskRepository(application)
     private val alarmScheduler = AlarmScheduler(application)
+    private val notificationHelper = NotificationHelper(application)
 
     private val _dayResetHour = MutableStateFlow(3)
     val dayResetHour: StateFlow<Int> = _dayResetHour
@@ -25,6 +28,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     private val _debugFeaturesEnabled = MutableStateFlow(false)
     val debugFeaturesEnabled: StateFlow<Boolean> = _debugFeaturesEnabled
+
+    private val _userMessage = MutableStateFlow<String?>(null)
+    val userMessage: StateFlow<String?> = _userMessage
 
     fun loadData() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -62,5 +68,57 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             val now = LocalDateTime.now()
             alarmScheduler.scheduleAllAlarms(updated, now)
         }
+    }
+
+    fun exportData(uri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val resolver = getApplication<Application>().contentResolver
+            try {
+                resolver.openOutputStream(uri, "wt").use { output ->
+                    if (output == null) {
+                        _userMessage.value = "Export failed: could not open destination"
+                        return@launch
+                    }
+                    repository.exportTo(output)
+                }
+                _userMessage.value = "Export complete"
+            } catch (e: Exception) {
+                _userMessage.value = "Export failed: ${e.message ?: e.javaClass.simpleName}"
+            }
+        }
+    }
+
+    fun importData(uri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val resolver = getApplication<Application>().contentResolver
+            try {
+                resolver.openInputStream(uri).use { input ->
+                    if (input == null) {
+                        _userMessage.value = "Import failed: could not open file"
+                        return@launch
+                    }
+                    repository.importFrom(input)
+                }
+
+                // Wipe stale notifications and rebuild alarms for the new data set.
+                notificationHelper.cancelAll()
+                val data = repository.load()
+                alarmScheduler.cancelAllSnoozeAlarms(data)
+                alarmScheduler.scheduleAllAlarms(data, LocalDateTime.now())
+
+                // Reflect imported settings in the UI.
+                _dayResetHour.value = data.dayResetHour
+                _dayResetMinute.value = data.dayResetMinute
+                _debugFeaturesEnabled.value = data.debugFeaturesEnabled
+
+                _userMessage.value = "Import complete — ${data.triggers.size} trigger(s) restored"
+            } catch (e: Exception) {
+                _userMessage.value = "Import failed: ${e.message ?: e.javaClass.simpleName}"
+            }
+        }
+    }
+
+    fun clearUserMessage() {
+        _userMessage.value = null
     }
 }

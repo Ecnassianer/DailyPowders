@@ -7,6 +7,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
+import java.io.InputStream
+import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
@@ -145,6 +147,42 @@ class TaskRepository(private val context: Context) {
                 StandardCopyOption.REPLACE_EXISTING
             )
         }
+    }
+
+    /**
+     * Writes the current data file (or default state if missing) to [output].
+     * Caller owns the stream.
+     */
+    fun exportTo(output: OutputStream) {
+        synchronized(LOCK) {
+            val current = loadInternal().copy(schemaVersion = CURRENT_SCHEMA_VERSION)
+            val jsonString = json.encodeToString(TaskDataFile.serializer(), current)
+            output.write(jsonString.toByteArray(Charsets.UTF_8))
+        }
+    }
+
+    /**
+     * Validates [input] as a TaskDataFile JSON (with schema migration if needed)
+     * and replaces the on-disk data atomically. Throws if invalid.
+     */
+    fun importFrom(input: InputStream) {
+        val content = input.bufferedReader(Charsets.UTF_8).use { it.readText() }
+        val data = parseAndMigrate(content)
+            ?: throw IllegalArgumentException("File is not a valid Daily Powders backup")
+        save(data)
+    }
+
+    private fun parseAndMigrate(content: String): TaskDataFile? {
+        if (content.isBlank()) return null
+        val rawJson = json.parseToJsonElement(content) as? JsonObject ?: return null
+        val fileVersion = rawJson["schemaVersion"]?.jsonPrimitive?.int ?: 1
+        if (fileVersion > CURRENT_SCHEMA_VERSION) {
+            throw SchemaVersionTooNewException(fileVersion, CURRENT_SCHEMA_VERSION)
+        }
+        val migrated = if (fileVersion < CURRENT_SCHEMA_VERSION) {
+            migrateToCurrentVersion(rawJson, fileVersion)
+        } else rawJson
+        return json.decodeFromString<TaskDataFile>(migrated.toString())
     }
 
     private fun migrateToCurrentVersion(data: JsonObject, fromVersion: Int): JsonObject {
