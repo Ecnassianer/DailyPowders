@@ -72,7 +72,7 @@ play {
     serviceAccountCredentials.set(rootProject.file("play-service-account.json"))
     track.set("internal")
     defaultToAppBundles.set(true)
-    releaseStatus.set(com.github.triplet.gradle.androidpublisher.ReleaseStatus.DRAFT)
+    releaseStatus.set(com.github.triplet.gradle.androidpublisher.ReleaseStatus.COMPLETED)
 }
 
 dependencies {
