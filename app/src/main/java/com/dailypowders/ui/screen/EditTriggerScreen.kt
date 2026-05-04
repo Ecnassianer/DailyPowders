@@ -16,6 +16,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.filled.Notifications
 import com.dailypowders.data.model.*
 import com.dailypowders.ui.viewmodel.TriggerViewModel
 
@@ -42,6 +43,7 @@ fun EditTriggerScreen(
         return
     }
 
+    var soundEnabled by remember(trigger) { mutableStateOf(trigger.soundEnabled) }
     var triggerTitle by remember(trigger) { mutableStateOf(trigger.title) }
     var happensEvery by remember(trigger) { mutableStateOf(trigger.happensEvery) }
     var hour by remember(trigger) { mutableIntStateOf(trigger.when_?.hour ?: 8) }
@@ -85,6 +87,27 @@ fun EditTriggerScreen(
                     label = { Text("Trigger Title (optional)") },
                     modifier = Modifier.fillMaxWidth()
                 )
+            }
+
+            item {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("Notification Sound", style = MaterialTheme.typography.bodyMedium)
+                    IconButton(onClick = { soundEnabled = !soundEnabled }) {
+                        Icon(
+                            Icons.Default.Notifications,
+                            contentDescription = if (soundEnabled) "Sound on" else "Sound off",
+                            tint = if (soundEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                        )
+                    }
+                    Text(
+                        if (soundEnabled) "On" else "Off",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             item {
@@ -202,15 +225,12 @@ fun EditTriggerScreen(
                             }
                         }
                         Box {
-                            val expiresOptions = listOf(
-                                "" to "End of Day",
-                                "1" to "1 hour",
-                                "2" to "2 hours",
-                                "4" to "4 hours",
-                                "6" to "6 hours",
-                                "8" to "8 hours",
-                                "12" to "12 hours"
-                            )
+                            val expiresOptions = buildList {
+                                add("" to "End of Day")
+                                for (h in 1..23) {
+                                    add(h.toString() to if (h == 1) "1 hour" else "$h hours")
+                                }
+                            }
                             val selectedLabel = expiresOptions.find { it.first == task.expiresHours }?.second
                                 ?: if (task.expiresHours.isBlank()) "End of Day" else "${task.expiresHours} hours"
                             OutlinedTextField(
@@ -288,7 +308,8 @@ fun EditTriggerScreen(
                         when_ = if (happensEvery != HappensEvery.MANUALLY) TimeOfDay(hour, minute) else null,
                         weekDay = if (happensEvery == HappensEvery.WEEKLY) weekDay else null,
                         monthDay = if (happensEvery == HappensEvery.MONTHLY) monthDay else null,
-                        tasks = taskList
+                        tasks = taskList,
+                        soundEnabled = soundEnabled
                     )
                     viewModel.updateTrigger(updatedTrigger)
                     onDone()

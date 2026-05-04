@@ -5,7 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,21 +38,14 @@ fun TaskViewScreen(viewModel: TaskViewModel) {
             item {
                 SectionHeader("Active Tasks")
             }
-            items(activeTasks, key = { it.first.id }) { (task, trigger) ->
-                TaskRow(
-                    task = task,
-                    trigger = trigger,
-                    isCompleted = false,
-                    isExpired = false,
-                    isHighlighted = task.id == highlightTaskId,
-                    onClick = {
-                        viewModel.completeTask(task.id)
-                    },
-                    onHighlightFinished = {
-                        viewModel.clearHighlight()
-                    }
-                )
-            }
+            taskGroupsByTrigger(
+                tasks = activeTasks,
+                isCompleted = false,
+                isExpired = false,
+                highlightTaskId = highlightTaskId,
+                onTaskClick = { viewModel.completeTask(it) },
+                onHighlightFinished = { viewModel.clearHighlight() }
+            )
         }
 
         // Completed Tasks Section
@@ -61,18 +54,13 @@ fun TaskViewScreen(viewModel: TaskViewModel) {
                 Spacer(modifier = Modifier.height(16.dp))
                 SectionHeader("Completed Tasks")
             }
-            items(completedTasks, key = { it.first.id }) { (task, trigger) ->
-                TaskRow(
-                    task = task,
-                    trigger = trigger,
-                    isCompleted = true,
-                    isExpired = false,
-                    isHighlighted = false,
-                    onClick = {
-                        viewModel.uncompleteTask(task.id)
-                    }
-                )
-            }
+            taskGroupsByTrigger(
+                tasks = completedTasks,
+                isCompleted = true,
+                isExpired = false,
+                highlightTaskId = null,
+                onTaskClick = { viewModel.uncompleteTask(it) }
+            )
         }
 
         // Expired Tasks Section
@@ -81,18 +69,13 @@ fun TaskViewScreen(viewModel: TaskViewModel) {
                 Spacer(modifier = Modifier.height(16.dp))
                 SectionHeader("Expired Tasks")
             }
-            items(expiredTasks, key = { it.first.id }) { (task, trigger) ->
-                TaskRow(
-                    task = task,
-                    trigger = trigger,
-                    isCompleted = false,
-                    isExpired = true,
-                    isHighlighted = false,
-                    onClick = {
-                        viewModel.completeTask(task.id)
-                    }
-                )
-            }
+            taskGroupsByTrigger(
+                tasks = expiredTasks,
+                isCompleted = false,
+                isExpired = true,
+                highlightTaskId = null,
+                onTaskClick = { viewModel.completeTask(it) }
+            )
         }
 
         // Empty state
@@ -123,6 +106,48 @@ private fun SectionHeader(title: String) {
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(vertical = 8.dp)
     )
+}
+
+@Composable
+private fun TriggerGroupHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 2.dp)
+    )
+}
+
+private fun LazyListScope.taskGroupsByTrigger(
+    tasks: List<Pair<Task, Trigger>>,
+    isCompleted: Boolean,
+    isExpired: Boolean,
+    highlightTaskId: String?,
+    onTaskClick: (String) -> Unit,
+    onHighlightFinished: (() -> Unit)? = null
+) {
+    // Preserve overall ordering by walking the list and emitting a header
+    // each time the trigger changes.
+    var lastTriggerId: String? = null
+    for ((task, trigger) in tasks) {
+        if (trigger.id != lastTriggerId) {
+            item(key = "header-${trigger.id}-${task.id}") {
+                TriggerGroupHeader(trigger.title)
+            }
+            lastTriggerId = trigger.id
+        }
+        item(key = task.id) {
+            TaskRow(
+                task = task,
+                trigger = trigger,
+                isCompleted = isCompleted,
+                isExpired = isExpired,
+                isHighlighted = task.id == highlightTaskId,
+                onClick = { onTaskClick(task.id) },
+                onHighlightFinished = onHighlightFinished
+            )
+        }
+    }
 }
 
 @Composable
@@ -166,7 +191,7 @@ private fun TaskRow(
             .fillMaxWidth()
             .background(backgroundColor, shape = MaterialTheme.shapes.small)
             .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 12.dp),
+            .padding(horizontal = 8.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Checkbox(

@@ -106,6 +106,7 @@ class NotificationHelper(private val context: Context) {
             .addAction(0, "Snooze 60", snooze60Pending)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setSilent(!trigger.soundEnabled)
 
         // Layer 3: setTimeoutAfter for expiring tasks
         if (expirationTime != null && expirationTime.isAfter(now)) {

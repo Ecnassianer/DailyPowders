@@ -52,7 +52,8 @@ class TriggerViewModel(application: Application) : AndroidViewModel(application)
         when_: TimeOfDay?,
         weekDay: Int?,
         monthDay: Int?,
-        tasks: List<Pair<String, Int?>>
+        tasks: List<Pair<String, Int?>>,
+        soundEnabled: Boolean = false
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             val now = LocalDateTime.now()
@@ -71,7 +72,8 @@ class TriggerViewModel(application: Application) : AndroidViewModel(application)
                 when_ = when_,
                 weekDay = weekDay,
                 monthDay = monthDay,
-                tasks = taskList
+                tasks = taskList,
+                soundEnabled = soundEnabled
             )
 
             repository.update { data ->
@@ -162,6 +164,17 @@ class TriggerViewModel(application: Application) : AndroidViewModel(application)
             if (trigger.happensEvery != HappensEvery.MANUALLY) {
                 alarmScheduler.scheduleTriggerAlarm(trigger, data, now)
             }
+        }
+    }
+
+    fun toggleTriggerSound(triggerId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.update { data ->
+                val trigger = data.triggers.find { it.id == triggerId } ?: return@update data
+                taskManager.updateTrigger(data, trigger.copy(soundEnabled = !trigger.soundEnabled))
+            }
+            val data = repository.load()
+            updateState(data)
         }
     }
 

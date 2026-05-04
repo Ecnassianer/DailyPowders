@@ -21,7 +21,8 @@ data class Trigger(
     @SerialName("when") val when_: TimeOfDay? = null,
     val weekDay: Int? = null,
     val monthDay: Int? = null,
-    val tasks: List<Task> = emptyList()
+    val tasks: List<Task> = emptyList(),
+    val soundEnabled: Boolean = false
 )
 
 @Serializable

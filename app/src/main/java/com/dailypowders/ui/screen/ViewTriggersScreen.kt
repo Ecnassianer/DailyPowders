@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,7 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dailypowders.data.model.HappensEvery
 import com.dailypowders.data.model.Trigger
+import com.dailypowders.domain.TaskManager
+import com.dailypowders.ui.theme.ComingUpOrange
 import com.dailypowders.ui.viewmodel.TriggerViewModel
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 @Composable
 fun ViewTriggersScreen(
@@ -23,6 +28,7 @@ fun ViewTriggersScreen(
 ) {
     val triggers by viewModel.triggers.collectAsState()
     val data by viewModel.data.collectAsState()
+    val taskManager = remember { TaskManager() }
 
     Column(
         modifier = Modifier
@@ -54,12 +60,23 @@ fun ViewTriggersScreen(
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
                 items(triggers, key = { it.id }) { trigger ->
+                    val isComingUp = remember(trigger, data.dailyState) {
+                        if (trigger.happensEvery == HappensEvery.MANUALLY) false
+                        else if (trigger.id in data.dailyState.activatedTriggers) false
+                        else {
+                            val now = LocalDateTime.now()
+                            val dayResetTime = LocalTime.of(data.dayResetHour, data.dayResetMinute)
+                            taskManager.shouldTriggerFire(trigger, now, dayResetTime)
+                        }
+                    }
                     TriggerCard(
                         trigger = trigger,
                         isActivatedToday = trigger.id in data.dailyState.activatedTriggers,
+                        isComingUp = isComingUp,
                         activationCount = data.dailyState.manualTriggerCounts[trigger.id],
                         onEdit = { onEditTrigger(trigger.id) },
                         onDelete = { viewModel.deleteTrigger(trigger.id) },
+                        onToggleSound = { viewModel.toggleTriggerSound(trigger.id) },
                         onActivate = {
                             if (trigger.happensEvery == HappensEvery.MANUALLY) {
                                 viewModel.activateManualTrigger(trigger.id)
@@ -76,9 +93,11 @@ fun ViewTriggersScreen(
 private fun TriggerCard(
     trigger: Trigger,
     isActivatedToday: Boolean,
+    isComingUp: Boolean,
     activationCount: Int?,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
+    onToggleSound: () -> Unit,
     onActivate: () -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -122,6 +141,20 @@ private fun TriggerCard(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
+                if (isComingUp) {
+                    Text(
+                        text = "Coming Up",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = ComingUpOrange
+                    )
+                }
+            }
+            IconButton(onClick = onToggleSound) {
+                Icon(
+                    Icons.Default.Notifications,
+                    contentDescription = if (trigger.soundEnabled) "Sound on" else "Sound off",
+                    tint = if (trigger.soundEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                )
             }
             IconButton(onClick = { showDeleteDialog = true }) {
                 Icon(

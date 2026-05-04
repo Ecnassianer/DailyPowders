@@ -8,6 +8,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,6 +32,7 @@ fun CreateTriggerScreen(
     viewModel: TriggerViewModel,
     onDone: () -> Unit
 ) {
+    var soundEnabled by remember { mutableStateOf(false) }
     var triggerTitle by remember { mutableStateOf("") }
     var happensEvery by remember { mutableStateOf(HappensEvery.DAILY) }
     var hour by remember { mutableIntStateOf(8) }
@@ -66,6 +68,27 @@ fun CreateTriggerScreen(
                     label = { Text("Trigger Title (optional)") },
                     modifier = Modifier.fillMaxWidth()
                 )
+            }
+
+            item {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("Notification Sound", style = MaterialTheme.typography.bodyMedium)
+                    IconButton(onClick = { soundEnabled = !soundEnabled }) {
+                        Icon(
+                            Icons.Default.Notifications,
+                            contentDescription = if (soundEnabled) "Sound on" else "Sound off",
+                            tint = if (soundEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                        )
+                    }
+                    Text(
+                        if (soundEnabled) "On" else "Off",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             // Happens Every
@@ -214,7 +237,8 @@ fun CreateTriggerScreen(
                         when_ = if (happensEvery != HappensEvery.MANUALLY) TimeOfDay(hour, minute) else null,
                         weekDay = if (happensEvery == HappensEvery.WEEKLY) weekDay else null,
                         monthDay = if (happensEvery == HappensEvery.MONTHLY) monthDay else null,
-                        tasks = taskList
+                        tasks = taskList,
+                        soundEnabled = soundEnabled
                     )
                     onDone()
                 }
@@ -249,15 +273,12 @@ fun CreateTriggerScreen(
     }
 }
 
-private val expiresOptions = listOf(
-    "" to "End of Day",
-    "1" to "1 hour",
-    "2" to "2 hours",
-    "4" to "4 hours",
-    "6" to "6 hours",
-    "8" to "8 hours",
-    "12" to "12 hours"
-)
+private val expiresOptions = buildList {
+    add("" to "End of Day")
+    for (h in 1..23) {
+        add(h.toString() to if (h == 1) "1 hour" else "$h hours")
+    }
+}
 
 @Composable
 private fun TaskEntryRow(
