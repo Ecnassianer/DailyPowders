@@ -55,6 +55,13 @@ class AlarmReceiver : BroadcastReceiver() {
 
             val trigger = updated.triggers.find { it.id == triggerId }
             if (trigger != null) {
+                // Vacation switch: don't activate or notify, but keep the schedule alive
+                // so alarms resume when the user un-pauses.
+                if (updated.tasksPaused) {
+                    alarmScheduler.scheduleTriggerAlarm(trigger, updated, now)
+                    return@update updated
+                }
+
                 // Check if this trigger should actually fire for the current effective day
                 val dayResetTime = LocalTime.of(updated.dayResetHour, updated.dayResetMinute)
                 if (taskManager.shouldTriggerFire(trigger, now, dayResetTime)) {
@@ -98,6 +105,9 @@ class AlarmReceiver : BroadcastReceiver() {
             d
         } catch (e: Exception) { return }
         val state = data.dailyState
+
+        // Vacation switch: drop the snoozed notification rather than re-posting it.
+        if (data.tasksPaused) return
 
         if (taskId in state.completedTaskIds || taskId in state.expiredTaskIds) {
             return // Task already completed or expired, don't re-post

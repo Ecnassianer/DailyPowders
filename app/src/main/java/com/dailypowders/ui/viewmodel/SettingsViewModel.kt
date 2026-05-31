@@ -29,6 +29,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _debugFeaturesEnabled = MutableStateFlow(false)
     val debugFeaturesEnabled: StateFlow<Boolean> = _debugFeaturesEnabled
 
+    private val _tasksPaused = MutableStateFlow(false)
+    val tasksPaused: StateFlow<Boolean> = _tasksPaused
+
     private val _userMessage = MutableStateFlow<String?>(null)
     val userMessage: StateFlow<String?> = _userMessage
 
@@ -40,6 +43,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _dayResetHour.value = data.dayResetHour
             _dayResetMinute.value = data.dayResetMinute
             _debugFeaturesEnabled.value = data.debugFeaturesEnabled
+            _tasksPaused.value = data.tasksPaused
         }
     }
 
@@ -49,6 +53,15 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _debugFeaturesEnabled.value = newValue
             repository.update { data ->
                 data.copy(debugFeaturesEnabled = newValue)
+            }
+        }
+    }
+
+    fun setTasksPaused(paused: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _tasksPaused.value = paused
+            repository.update { data ->
+                data.copy(tasksPaused = paused)
             }
         }
     }
@@ -110,6 +123,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 _dayResetHour.value = data.dayResetHour
                 _dayResetMinute.value = data.dayResetMinute
                 _debugFeaturesEnabled.value = data.debugFeaturesEnabled
+                _tasksPaused.value = data.tasksPaused
 
                 _userMessage.value = "Import complete — ${data.triggers.size} trigger(s) restored"
             } catch (e: Exception) {

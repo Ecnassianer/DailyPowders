@@ -27,13 +27,20 @@ fun TaskViewScreen(viewModel: TaskViewModel) {
     val completedTasks by viewModel.completedTasks.collectAsState()
     val expiredTasks by viewModel.expiredTasks.collectAsState()
     val highlightTaskId by viewModel.highlightTaskId.collectAsState()
+    val data by viewModel.data.collectAsState()
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        if (data.tasksPaused) {
+            PausedBanner()
+        }
+
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
         // Active Tasks Section
         if (activeTasks.isNotEmpty()) {
             item {
@@ -96,6 +103,22 @@ fun TaskViewScreen(viewModel: TaskViewModel) {
                 }
             }
         }
+        }
+    }
+}
+
+@Composable
+private fun PausedBanner() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.tertiaryContainer
+    ) {
+        Text(
+            text = "Tasks paused",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
     }
 }
 

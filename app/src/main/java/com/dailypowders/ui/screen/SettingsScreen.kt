@@ -20,6 +20,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
     val dayResetHour by viewModel.dayResetHour.collectAsState()
     val dayResetMinute by viewModel.dayResetMinute.collectAsState()
     val debugEnabled by viewModel.debugFeaturesEnabled.collectAsState()
+    val tasksPaused by viewModel.tasksPaused.collectAsState()
     val userMessage by viewModel.userMessage.collectAsState()
     var showTimePicker by remember { mutableStateOf(false) }
     var showImportConfirm by remember { mutableStateOf(false) }
@@ -87,6 +88,33 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Pause All Tasks",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = "Stop triggers from firing until turned off",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = tasksPaused,
+                        onCheckedChange = { viewModel.setTasksPaused(it) }
+                    )
                 }
             }
 

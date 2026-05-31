@@ -9,6 +9,7 @@ data class TaskDataFile(
     val dayResetHour: Int = 3,
     val dayResetMinute: Int = 33,
     val debugFeaturesEnabled: Boolean = false,
+    val tasksPaused: Boolean = false,
     val triggers: List<Trigger> = emptyList(),
     val dailyState: DailyState = DailyState()
 )
