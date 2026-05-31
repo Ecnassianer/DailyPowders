@@ -116,5 +116,23 @@ class TaskDataSerializationTest {
         assertEquals(33, data.dayResetMinute)
         assertTrue(data.triggers.isEmpty())
         assertEquals("", data.dailyState.date)
+        assertFalse(data.tasksPaused)
+    }
+
+    @Test
+    fun `tasksPaused round-trips correctly`() {
+        val data = TaskDataFile(tasksPaused = true)
+        val serialized = json.encodeToString(TaskDataFile.serializer(), data)
+        val deserialized = json.decodeFromString<TaskDataFile>(serialized)
+        assertTrue(deserialized.tasksPaused)
+    }
+
+    @Test
+    fun `data file without tasksPaused defaults to false`() {
+        // Back-compat: files written before the vacation switch existed have no
+        // tasksPaused key and must deserialize as not-paused.
+        val jsonString = """{"schemaVersion":1,"dayResetHour":3,"dayResetMinute":33,"triggers":[]}"""
+        val data = json.decodeFromString<TaskDataFile>(jsonString)
+        assertFalse(data.tasksPaused)
     }
 }
