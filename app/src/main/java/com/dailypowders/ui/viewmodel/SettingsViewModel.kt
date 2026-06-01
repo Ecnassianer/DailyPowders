@@ -12,6 +12,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.LocalDateTime
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
@@ -19,6 +21,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val repository = TaskRepository(application)
     private val alarmScheduler = AlarmScheduler(application)
     private val notificationHelper = NotificationHelper(application)
+
+    // Serializes every "read disk + publish to flows" and "write disk + publish"
+    // sequence so a navigation-triggered loadData() can't publish a stale value
+    // on top of a toggle that just wrote to disk (and vice versa).
+    private val stateMutex = Mutex()
 
     private val _dayResetHour = MutableStateFlow(3)
     val dayResetHour: StateFlow<Int> = _dayResetHour
@@ -35,51 +42,62 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _userMessage = MutableStateFlow<String?>(null)
     val userMessage: StateFlow<String?> = _userMessage
 
+    /** Publish all persisted settings to the UI flows. Call inside [stateMutex]. */
+    private fun publishSettings(data: TaskDataFile) {
+        _dayResetHour.value = data.dayResetHour
+        _dayResetMinute.value = data.dayResetMinute
+        _debugFeaturesEnabled.value = data.debugFeaturesEnabled
+        _tasksPaused.value = data.tasksPaused
+    }
+
     fun loadData() {
         viewModelScope.launch(Dispatchers.IO) {
-            val data = try { repository.load() } catch (e: Exception) {
-                TaskDataFile()
+            stateMutex.withLock {
+                val data = try { repository.load() } catch (e: Exception) {
+                    TaskDataFile()
+                }
+                publishSettings(data)
             }
-            _dayResetHour.value = data.dayResetHour
-            _dayResetMinute.value = data.dayResetMinute
-            _debugFeaturesEnabled.value = data.debugFeaturesEnabled
-            _tasksPaused.value = data.tasksPaused
         }
     }
 
     fun toggleDebugFeatures() {
         viewModelScope.launch(Dispatchers.IO) {
-            val newValue = !_debugFeaturesEnabled.value
-            _debugFeaturesEnabled.value = newValue
-            repository.update { data ->
-                data.copy(debugFeaturesEnabled = newValue)
+            stateMutex.withLock {
+                repository.update { data ->
+                    data.copy(debugFeaturesEnabled = !data.debugFeaturesEnabled)
+                }
+                _debugFeaturesEnabled.value = repository.load().debugFeaturesEnabled
             }
         }
     }
 
     fun setTasksPaused(paused: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            _tasksPaused.value = paused
-            repository.update { data ->
-                data.copy(tasksPaused = paused)
+            stateMutex.withLock {
+                repository.update { data ->
+                    data.copy(tasksPaused = paused)
+                }
+                _tasksPaused.value = paused
             }
         }
     }
 
     fun updateDayResetTime(hour: Int, minute: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            _dayResetHour.value = hour
-            _dayResetMinute.value = minute
+            stateMutex.withLock {
+                repository.update { data ->
+                    data.copy(dayResetHour = hour, dayResetMinute = minute)
+                }
 
-            repository.update { data ->
-                data.copy(dayResetHour = hour, dayResetMinute = minute)
+                val updated = repository.load()
+                _dayResetHour.value = updated.dayResetHour
+                _dayResetMinute.value = updated.dayResetMinute
+
+                // Reschedule day reset alarm and all trigger alarms with new time
+                val now = LocalDateTime.now()
+                alarmScheduler.scheduleAllAlarms(updated, now)
             }
-
-            val updated = repository.load()
-
-            // Reschedule day reset alarm and all trigger alarms with new time
-            val now = LocalDateTime.now()
-            alarmScheduler.scheduleAllAlarms(updated, now)
         }
     }
 
@@ -105,27 +123,26 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch(Dispatchers.IO) {
             val resolver = getApplication<Application>().contentResolver
             try {
-                resolver.openInputStream(uri).use { input ->
-                    if (input == null) {
-                        _userMessage.value = "Import failed: could not open file"
-                        return@launch
+                stateMutex.withLock {
+                    resolver.openInputStream(uri).use { input ->
+                        if (input == null) {
+                            _userMessage.value = "Import failed: could not open file"
+                            return@launch
+                        }
+                        repository.importFrom(input)
                     }
-                    repository.importFrom(input)
+
+                    // Wipe stale notifications and rebuild alarms for the new data set.
+                    notificationHelper.cancelAll()
+                    val data = repository.load()
+                    alarmScheduler.cancelAllSnoozeAlarms(data)
+                    alarmScheduler.scheduleAllAlarms(data, LocalDateTime.now())
+
+                    // Reflect imported settings in the UI.
+                    publishSettings(data)
+
+                    _userMessage.value = "Import complete — ${data.triggers.size} trigger(s) restored"
                 }
-
-                // Wipe stale notifications and rebuild alarms for the new data set.
-                notificationHelper.cancelAll()
-                val data = repository.load()
-                alarmScheduler.cancelAllSnoozeAlarms(data)
-                alarmScheduler.scheduleAllAlarms(data, LocalDateTime.now())
-
-                // Reflect imported settings in the UI.
-                _dayResetHour.value = data.dayResetHour
-                _dayResetMinute.value = data.dayResetMinute
-                _debugFeaturesEnabled.value = data.debugFeaturesEnabled
-                _tasksPaused.value = data.tasksPaused
-
-                _userMessage.value = "Import complete — ${data.triggers.size} trigger(s) restored"
             } catch (e: Exception) {
                 _userMessage.value = "Import failed: ${e.message ?: e.javaClass.simpleName}"
             }
